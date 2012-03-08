@@ -1,0 +1,21 @@
+table.posttypebuilder-property-table{}
+table.posttypebuilder-property-table tr th{text-align:left;vertical-align:top;font-weight:normal;padding-right:10px;}
+table.posttypebuilder-property-table tr th label{display:block;line-height:24px;cursor:default;}
+table.posttypebuilder-property-table tr th label span.posttypebuilder-required{color:red;}
+
+table.posttypebuilder-property-table tr td.posttypebuilder-field textarea{width:398px;}
+table.posttypebuilder-property-table tr td.posttypebuilder-field select{width:400px;}
+table.posttypebuilder-property-table tr td.posttypebuilder-field input.text{width:400px;}
+
+table.posttypebuilder-property-table tr td.posttypebuilder-field-multiple ul{height:60px;overflow-y:scroll;background-color:#FFFFFF;border:solid 1px #DFDFDF;border-radius:4px;margin:1px;margin-left:2px;padding:2px 2px 0;font-size:11px;width:391px;}
+table.posttypebuilder-property-table tr td.posttypebuilder-field-multiple ul li{margin:0;line-height:16px;height:16px;margin-bottom:2px;white-space:nowrap;width:375px;}
+table.posttypebuilder-property-table tr td.posttypebuilder-field-multiple ul li.ui-sortable-placeholder{background:#f1f1f1;border-radius:3px;}
+table.posttypebuilder-property-table tr td.posttypebuilder-field-multiple ul li span.grippy{float:left;margin-right:8px;}
+table.posttypebuilder-property-table tr td.posttypebuilder-field-multiple ul.sortable li span.grippy{width:6px;height:16px;background:url(grippy.png) 0 3px no-repeat;cursor:move;margin-right:2px;}
+table.posttypebuilder-property-table tr td.posttypebuilder-field-multiple ul li span.checkbox-wrapper{float:left;width:15px;overflow:hidden;}
+table.posttypebuilder-property-table tr td.posttypebuilder-field-multiple ul li label{float:left;cursor:default;}
+table.posttypebuilder-property-table tr td.posttypebuilder-field-multiple ul li label span.text{float:left;overflow:hidden;max-width:328px;text-overflow:ellipsis;}
+table.posttypebuilder-property-table tr td.posttypebuilder-field-multiple ul li label span.instance-does-not-exist{color:red;}
+table.posttypebuilder-property-table tr td.posttypebuilder-field-multiple ul li label a{float:left;visibility:hidden;overflow:hidden;max-width:20px;margin-left:2px;}
+table.posttypebuilder-property-table tr td.posttypebuilder-field-multiple ul li:hover label a{visibility:visible;}
+table.posttypebuilder-property-table tr td.posttypebuilder-field-multiple span.button{margin-left:2px;}
