@@ -10,9 +10,10 @@ Maps @annotated PHP classes to custom post types, automatically adds relevant fi
 
 ## Description ##
 
-PostTypeBuilder is an Object Relational Mapper connecting directly into the Wordpress engine, and provides handy scaffolding through the Wordpress GUI, as well as *data querying* similar to LINQ and ActiveRecord (Book::find()->where(...)).
+PostTypeBuilder is an Object Relational Mapper connecting directly into the Wordpress engine, and provides handy scaffolding through the Wordpress GUI, as well as *data querying* similar to LINQ and ActiveRecord (`Book::find()->where(...)`).
 
 ```php
+<?php
 class Book extends Entity{
     /** @Property */
     public $number_of_pages;
@@ -20,6 +21,7 @@ class Book extends Entity{
 ```
 
 ```php
+<?php
 while(have_posts()){
 	the_post(); $book = new Book($post);
 	
@@ -41,6 +43,7 @@ Any classes in `wp-content/classes`, where the filename (like `class_name.php`) 
 Following example needs to be defined in `wp-content/classes/book.php`, and results in a registered post type being shown in the admin UI (but not publicly queryable):
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -57,6 +60,7 @@ Any class properties prefixed by the annotational comment `/** @Property */` wil
 Following example, building on the previous `Book` example class, will display a text form field in the edit/create post screen:
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -69,6 +73,7 @@ class Book extends Entity{
 To enable the property to carry multiple values, use the `= array()` assignment:
 
 ```php
+<?php
 /** @Property */
 public $authors = array();
 ```
@@ -82,12 +87,14 @@ You can load entities in three ways.
 (1) By post ID:
 
 ```php
+<?php
 $book = new Book(21);
 ```
 
 (2) By post object (useful in the loop):
 
 ```php
+<?php
 global $post;
 
 $book = new Book($post);
@@ -96,6 +103,7 @@ $book = new Book($post);
 (3) By query:
 
 ```php
+<?php
 $books = Book::find()->where("pages > (NUMERIC)", 10);
 
 foreach($books as $book){ ... }
@@ -106,6 +114,7 @@ foreach($books as $book){ ... }
 Following code shows how to manipulate your entities:
 
 ```php
+<?php
 $book = new Book();
 $book->post_title = "Foo";
 $book->save();
@@ -153,6 +162,7 @@ To use these, include those you want in a single `/**  */` annotational "DocBloc
 The following example registers a Post class, with the internal, canonical name "content_post":
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -168,6 +178,7 @@ class Post extends Entity{
 The following example defines the irregular plural name "Virii" for the class "Virus":
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -181,6 +192,7 @@ class Virus extends Entity{
 The following example overrides the menu name (subsequent label assignations need to separated by comma):
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -210,6 +222,7 @@ Possible values are:
 The following example enables support for text editor and comments:
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -225,6 +238,7 @@ By default, entity types are not enabled to be visible to outside users. As such
 The following example enables "publicly queryable" for the entity type:
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -238,6 +252,7 @@ class Book extends Entity{
 The following example enables post archives:
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -256,6 +271,7 @@ class Book extends Entity{
 The following code specifies that two panels, "Properties" (in main column) and "Options" (in side column) should be used:
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -290,6 +306,7 @@ By default, the property type is "Text", which can be declared explicitly by inc
 The following example defines a property called `number_of_pages` in the entity Book:
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -316,6 +333,7 @@ Since 0.4, PostTypeBuilder uses WP's post_meta functions which takes care of arr
 The following example enables the "author_names" property to hold multiple values:
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -352,6 +370,7 @@ PostTypeBuilder supplies a number of built-in types:
 The following example defines a `Book` which contains a collection of `User`s who "liked" it:
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -366,6 +385,7 @@ class Book extends Entity{
 The following example defines a `Book` which contains a property specifying the difficulty of the books' language:
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -382,6 +402,7 @@ If you have an entity class called "Book", then you can make the property link t
 *You need to name your property with an ending "_id". For properties with multiple values, it must end with _ids.*
 
 ```php
+<?php
 /** @Property(type="Book") */
 public $favorite_book_id;
 ```
@@ -389,6 +410,7 @@ public $favorite_book_id;
 Now, when accessing your entity object, you can get its associated object by accessing the property name *without id*:
 
 ```php
+<?php
 $entity = ...
 
 $book = $entity->favorite_book;
@@ -397,6 +419,7 @@ $book = $entity->favorite_book;
 The preceding code will give you the whole Entity object, loaded with properties and all. To get just the id, use the proper property name:
 
 ```php
+<?php
 $entity = ...
 
 $book_id = $entity->favorite_book_id;
@@ -405,6 +428,7 @@ $book_id = $entity->favorite_book_id;
 When having properties with multiple values, name your code with the singular name + "_ids":
 
 ```php
+<?php
 /** @Property(type="Book") */
 public $favorite_book_ids;
 ```
@@ -412,6 +436,7 @@ public $favorite_book_ids;
 PostTypeBuilder listens for the property name minus "_ids" plus "s", like the following code:
 
 ```php
+<?php
 $entity = ...
 
 $books = $entity->favorite_books;
@@ -420,6 +445,7 @@ $books = $entity->favorite_books;
 To only get the IDs, use the following code:
 
 ```php
+<?php
 $entity = ...
 
 $book_ids = $entity->favorite_book_ids;
@@ -432,6 +458,7 @@ $book_ids = $entity->favorite_book_ids;
 The following example specifies the label for two properties:
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -456,6 +483,7 @@ class Book extends Entity{
 To start using the query mechanism, you will need to retrieve a Query object. This is done like so:
 
 ```php
+<?php
 $query_object = Book::find();
 ```
 
@@ -464,15 +492,18 @@ This object can then be used to add parameters to what will add up to an WP Quer
 To limit the amount of hits in your query to 5, use the following code:
 
 ```php
+<?php
 $query_object = Book::find(5);
 ```
 
 ```php
+<?php
 $first_item = $query_object[0]; // executes search and returns first match
 $second_item = $query_object[1]; // by now, result is already cached in $query_object, and another query will not be done
 ```
 
 ```php
+<?php
 foreach($query_object as $item){ // executes search and returns iterator
 	...
 }
@@ -485,6 +516,7 @@ When making the query, the query acts as a proxy for its found instances. Even t
 The following example does a search for book author name:
 
 ```php
+<?php
 $query_object = Book::find();
 $query_object->where("author_name", "Björn Ali Göransson");
 $book = $query_object[0];
@@ -493,6 +525,7 @@ $book = $query_object[0];
 Almost each query method returns the query object itself, by the way, which makes way for chaining:
 
 ```php
+<?php
 $book = Book::find()->where("author_name", "Björn Ali Göransson")->get(0);
 ```
 
@@ -501,6 +534,7 @@ $book = Book::find()->where("author_name", "Björn Ali Göransson")->get(0);
 The syntax is as following:
 
 ```php
+<?php
 $query_object->where(key, value);
 ```
 
@@ -509,6 +543,7 @@ To make a search for a property, you use the same syntax. When searching for pro
 The following example searches for books where `year` is between 1950 and 2000:
 
 ```php
+<?php
 $query_object = Book::find();
 
 $query_object->where("year > (NUMERIC)", 1950);
@@ -564,6 +599,7 @@ In order to implement custom form fields for choosing an entity, override the `g
 The following example overrides the `<select>` dropdown form field for selecting Books, as it would be too long to load such a list, and instead delegates the `generate_input_field` to the `Text` type (and thereby exposing the ID):
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -583,6 +619,7 @@ When listing entities for form fields, the text representation of the entity is 
 The following example shows the authors in the books' text representation:
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -603,6 +640,7 @@ Class methods can be added without any "plumbing".
 The following example adds a "sort" method to the Book class:
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -619,6 +657,7 @@ class Book extends Entity{
 The method can then be used like the following code:
 
 ```php
+<?php
 $book = ...
 
 $book->sort();
@@ -648,6 +687,7 @@ Following is a list of all methods that can be implemented:
 The following example sorts author names on save:
 
 ```php
+<?php
 namespace MyEntities;
 use \PostTypeBuilder\Entity;
 
@@ -670,12 +710,3 @@ class Book extends Entity{
 ```
 
 ***Note:** The save_post will not fire recursively into itself, which means that the last call to `$book->save()` will not make the `save_post()` execute again.*  
-
-
-
-
-
-
-
-
-
