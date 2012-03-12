@@ -14,17 +14,44 @@ use \ReflectionProperty;
 require_once "addendum/index.php";
 require_once "annotations.classes.php";
 require_once "entity.class.php";
+require_once "template.class.php";
 require_once "post-meta-manager.class.php";
 require_once "query.class.php";
 
 if(!defined("POSTTYPEBUILDER_ENTITIES_NAMESPACE")){
 	define("POSTTYPEBUILDER_ENTITIES_NAMESPACE", "MyEntities");
 }
-define("POSTTYPEBUILDER_RELATIVE_CLASSPATH", 'wp-content/classes/');
-define("POSTTYPEBUILDER_CLASSPATH", ABSPATH . POSTTYPEBUILDER_RELATIVE_CLASSPATH);
 
-add_action('init', "\\PostTypeBuilder\\PostTypeBuilder::load_classes");
+if(!defined("POSTTYPEBUILDER_TEMPLATES_NAMESPACE")){
+	define("POSTTYPEBUILDER_TEMPLATES_NAMESPACE", "MyTemplates");
+}
+
+if(!defined("POSTTYPEBUILDER_RELATIVE_CLASSPATH")){
+	define("POSTTYPEBUILDER_RELATIVE_CLASSPATH", "classes/");
+}
+
+define("POSTTYPEBUILDER_CLASSPATH", WP_CONTENT_DIR . "/" . POSTTYPEBUILDER_RELATIVE_CLASSPATH);
+
+add_action("init", "\\PostTypeBuilder\\PostTypeBuilder::load_default_classpath");
 if(is_admin()) require __DIR__ . "/admin/index.php";
+
+//
+
+function posttypebuilder_string_ends_with($string, $part){
+	return substr($string, strlen($string) - strlen($part)) == $part;
+}
+
+function posttypebuilder_trim_off_end($string, $part){
+	if(posttypebuilder_string_ends_with($string, $part)){
+		return substr($string, 0, strlen($string) - strlen($part));
+	} else {
+		return $string;
+	}
+}
+
+function posttypebuilder_string_begins_with($string, $part){
+	return substr($string, 0, strlen($part)) == $part;
+}
 
 //
 
@@ -32,7 +59,7 @@ class PostTypeBuilder{
 	public static $registered_post_types = array();
 	public static $registered_class_names = array();
 	
-	public static $post_ids_currently_being_saved = array();
+	public static $post_ids_currently_being_saved = array(); // needed in order for save_post() not to recursively fire into itself
 	
 	public static $entity_hooks = array(
 		// wp hook arguments: $post_id
@@ -54,22 +81,26 @@ class PostTypeBuilder{
 		"trash_post"
 	);
 	
-	public static function load_classes(){
-		if(!is_dir(POSTTYPEBUILDER_CLASSPATH)){
-			$is_plugins_page = strpos($_SERVER["SCRIPT_FILENAME"], "tools.php");
-			
-			if(!$is_plugins_page){
-				add_action('admin_notices', function(){
-					echo "<div class='updated fade'><p>To use the graphical interface for PostTypeBuilder, go to <a href=\"tools.php?page=entity-types\">Tools ← Entity types</a>.</p></div>";
-				});
-			}
+	public static function load_default_classpath(){
+		if(is_dir(POSTTYPEBUILDER_CLASSPATH)){
+			PostTypeBuilder::load_classes(POSTTYPEBUILDER_CLASSPATH);
 			
 			return;
 		}
 		
-		if ($directory_handle = opendir(POSTTYPEBUILDER_CLASSPATH)) {
+// 		$is_plugins_page = strpos($_SERVER["SCRIPT_FILENAME"], "tools.php");
+
+// 		if(!$is_plugins_page){
+// 			add_action('admin_notices', function(){
+// 				echo "<div class='updated fade'><p>To use the graphical interface for PostTypeBuilder, go to <a href=\"tools.php?page=entity-types\">Tools &#2190; Entity types</a>.</p></div>";
+// 			});
+// 		}
+	}
+	
+	public static function load_classes($path){
+		if ($directory_handle = opendir($path)) {
 			while (false !== ($filename = readdir($directory_handle))) {
-				if($filename == '.' || $filename == '..'){
+				if($filename == "." || $filename == ".."){
 					continue;
 				}
 				
@@ -77,62 +108,81 @@ class PostTypeBuilder{
 					continue;
 				}
 				
-				$filename_without_extension = substr($filename, 0, strlen($filename) - 4);
-				$class_name = preg_replace('/(?:^|_)(.?)/e', "strtoupper('$1')", $filename_without_extension);
+				require_once $path . $filename;
 				
-				PostTypeBuilder::load_class($class_name);
+				$filename_without_extension = substr($filename, 0, strlen($filename) - 4);
+				$class_name = preg_replace('/(?:^|[_-])(.?)/e', "strtoupper('$1')", $filename_without_extension);
+				
+				if(posttypebuilder_string_ends_with($class_name, ".template")){
+					$class_name = posttypebuilder_trim_off_end($class_name, ".template");
+					
+					PostTypeBuilder::register_template($class_name);
+					
+					continue;
+				}
+				
+				if(posttypebuilder_string_ends_with($class_name, ".entity")){
+					$class_name = posttypebuilder_trim_off_end($class_name, ".entity");
+					
+					PostTypeBuilder::register_entity_type($class_name);
+					
+					continue;
+				}
+				
+				PostTypeBuilder::register_class($class_name);
 			}
 			
 			closedir($directory_handle);
 		}
 	}
 	
-	public static function load_class($class_name){
-		$qualified_class_name = "\\" . POSTTYPEBUILDER_ENTITIES_NAMESPACE . "\\" . $class_name;
-		
-		if(class_exists($qualified_class_name)){
-			add_action('admin_notices', create_function("", "echo \"<div class='updated fade'><p>PostTypeBuilder was going to include {$filename}, which is supposed to contain class <strong>{$class_name}</strong>, but that class was already defined elsewhere.</p></div>\";"));
-			
-			return;
+	public static function register_template($class_name, $namespace = ""){
+		if($namespace == ""){
+			$namespace = POSTTYPEBUILDER_TEMPLATES_NAMESPACE;
+		} else if(posttypebuilder_string_begins_with($namespace, "\\") == false) {
+			$namespace = "\\" . $namespace;
+		}
+	}
+	
+	public static function register_entity_type($class_name, $namespace = ""){
+		if($namespace == ""){
+			$namespace = POSTTYPEBUILDER_ENTITIES_NAMESPACE;
+		} else if(posttypebuilder_string_begins_with($namespace, "\\") == false) {
+			$namespace = "\\" . $namespace;
 		}
 		
-		$filename = strtolower(preg_replace('/([^A-Z])([A-Z])/', "$1_$2", $class_name)) . ".php";
-		require_once POSTTYPEBUILDER_CLASSPATH . $filename;
-		
-		if(!class_exists($qualified_class_name)){
-			if(class_exists("\\" . $class_name)){
-				add_action('admin_notices', create_function("", "echo \"<div class='updated fade'><p>PostTypeBuilder tried to load class <strong>{$class_name}</strong> in {$filename}, but it needs to be defined in namespace " . POSTTYPEBUILDER_ENTITIES_NAMESPACE . ".</p></div>\";"));
-				
-				return;
-			} else {
-				add_action('admin_notices', create_function("", "echo \"<div class='updated fade'><p>PostTypeBuilder tried to load class <strong>{$class_name}</strong> (with namespace MyEntities) in {$filename}, but no such class is defined there.</p></div>\";"));
-				
-				return;
-			}
-		}
-		
-		if(!is_subclass_of($qualified_class_name, "\\PostTypeBuilder\\Entity")){
-			add_action('admin_notices', create_function("", "echo \"<div class='updated fade'><p>PostTypeBuilder tried to load class <strong>{$class_name}</strong> in {$filename}, but it needs to derive (extend) from <strong>\\PostTypeBuilder\\Entity</strong>.</p></div>\";"));
-			
-			return;
-		}
-		
-		PostTypeBuilder::generate_class_meta($class_name);
-		
+		PostTypeBuilder::generate_class_meta($class_name, $namespace);
 		PostTypeBuilder::register_post_type($class_name);
 	}
 	
-	public static function generate_class_meta($class_name){
+	public function register_class($class_name, $namespace = ""){
+		if(posttypebuilder_string_begins_with($namespace, "\\") == false) {
+			$namespace = "\\" . $namespace;
+		}
+		
+		if(is_subclass_of($namespace . "\\" . $class_name, "\\PostTypeBuilder\\Entity")){
+			PostTypeBuilder::register_entity_type($class_name, $namespace);
+			return;
+		}
+		
+		if(is_subclass_of($namespace . "\\" . $class_name, "\\PostTypeBuilder\\Template")){
+			PostTypeBuilder::register_template($class_name, $namespace);
+			return;
+		}
+		
+		throw new Exception("PostTypeBuilder error: Class {$namespace}\\{$class_name} not derived from Entity or Template.");
+	}
+	
+	private static function generate_class_meta($class_name, $namespace){
 		$class_meta = new \stdClass;
 		
 		$class_meta->class_name = $class_name;
-		$class_meta->qualified_class_name = "\\" . POSTTYPEBUILDER_ENTITIES_NAMESPACE . "\\" . $class_meta->class_name;
-		
 		PostTypeBuilder::$registered_class_names[$class_meta->class_name] = $class_meta;
+		
+		$class_meta->qualified_class_name = $namespace . "\\" . $class_meta->class_name;
 		PostTypeBuilder::$registered_class_names[$class_meta->qualified_class_name] = $class_meta;
 		
 		$qualified_class_name_without_initial_slash = substr($class_meta->qualified_class_name, 1);
-		
 		PostTypeBuilder::$registered_class_names[$qualified_class_name_without_initial_slash] = $class_meta;
 		
 		$class_meta->class_reflector = new ReflectionAnnotatedClass($class_meta->qualified_class_name);
@@ -179,7 +229,7 @@ class PostTypeBuilder{
 		return $class_meta;
 	}
 	
-	public static function register_post_type($class_name){
+	private static function register_post_type($class_name){
 		$class_meta = PostTypeBuilder::$registered_class_names[$class_name];
 		
 		$qualified_class_name = $class_meta->qualified_class_name;
