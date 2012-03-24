@@ -129,7 +129,19 @@ class PostTypeBuilder{
 					continue;
 				}
 				
-				PostTypeBuilder::register_class($class_name);
+				if(class_exists(POSTTYPEBUILDER_ENTITIES_NAMESPACE . "\\" . $class_name)){
+					PostTypeBuilder::register_entity_type($class_name);
+					
+					continue;
+				}
+				
+				if(class_exists(POSTTYPEBUILDER_TEMPLATES_NAMESPACE . "\\" . $class_name)){
+					PostTypeBuilder::register_template($class_name);
+					
+					continue;
+				}
+				
+				throw new \Exception("PostTypeBuilder error: Class {$namespace}\\{$class_name} not derived from Entity or Template.");
 			}
 			
 			closedir($directory_handle);
@@ -139,16 +151,30 @@ class PostTypeBuilder{
 	public static function register_template($class_name, $namespace = ""){
 		if($namespace == ""){
 			$namespace = POSTTYPEBUILDER_TEMPLATES_NAMESPACE;
-		} else if(posttypebuilder_string_begins_with($namespace, "\\") == false) {
+		} else if(!posttypebuilder_string_begins_with($namespace, "\\")) {
 			$namespace = "\\" . $namespace;
 		}
+		
+		if(!is_subclass_of($namespace . "\\" . $class_name, "\\PostTypeBuilder\\Template")){
+			throw new \Exception("PostTypeBuilder error: Class {$namespace}\\{$class_name} not derived from \\PostTypeBuilder\\Template.");
+			
+			return;
+		}
+		
+		//
 	}
 	
 	public static function register_entity_type($class_name, $namespace = ""){
 		if($namespace == ""){
 			$namespace = POSTTYPEBUILDER_ENTITIES_NAMESPACE;
-		} else if(posttypebuilder_string_begins_with($namespace, "\\") == false) {
+		} else if(!posttypebuilder_string_begins_with($namespace, "\\")) {
 			$namespace = "\\" . $namespace;
+		}
+		
+		if(!is_subclass_of($namespace . "\\" . $class_name, "\\PostTypeBuilder\\Entity")){
+			throw new \Exception("PostTypeBuilder error: Class {$namespace}\\{$class_name} not derived from \\PostTypeBuilder\\Entity.");
+			
+			return;
 		}
 		
 		PostTypeBuilder::generate_class_meta($class_name, $namespace);
@@ -156,7 +182,7 @@ class PostTypeBuilder{
 	}
 	
 	public function register_class($class_name, $namespace = ""){
-		if(posttypebuilder_string_begins_with($namespace, "\\") == false) {
+		if($namespace != "" && posttypebuilder_string_begins_with($namespace, "\\") == false) {
 			$namespace = "\\" . $namespace;
 		}
 		
@@ -170,7 +196,7 @@ class PostTypeBuilder{
 			return;
 		}
 		
-		throw new Exception("PostTypeBuilder error: Class {$namespace}\\{$class_name} not derived from Entity or Template.");
+		throw new \Exception("PostTypeBuilder error: Class {$namespace}\\{$class_name} not derived from Entity or Template.");
 	}
 	
 	private static function generate_class_meta($class_name, $namespace){

@@ -457,7 +457,7 @@ To start using the query mechanism, you will need to retrieve a Query object. Th
 $query_object = Book::find();
 `
 
-This object can then be used to add parameters to what will add up to an WP Query object, which will be executed when accessed.
+This object can then be used to add parameters to what will add up to a WP Query object, which will be executed when accessed.
 
 To limit the amount of hits in your query to 5, use the following code:
 
@@ -466,8 +466,8 @@ $query_object = Book::find(5);
 `
 
 `
-$first_item = $query_object[0]; // executes search and returns first match
-$second_item = $query_object[1]; // by now, result is already cached in $query_object, and another query will not be done
+$first_item = $query_object[0]; // executes search, caches result, and returns first match
+$second_item = $query_object[1]; // by now, result is already cached in $query_object, and another query will not be executed
 `
 
 `
@@ -533,7 +533,7 @@ Operator should be one of the following:
 * `BETWEEN`
 * `NOT BETWEEN`
 
-*If you don't specify an operator, then like WP_Query, it will default to `=`.*
+*If you don't specify an operator, then (like WP_Query) it will default to `=`.*
 
 `format` specifies to which data type the value should be casted.
 
@@ -550,6 +550,8 @@ Possible values are:
 * `UNSIGNED`.
 
 *If you don't specify a format, then like WP_Query, it will default to `CHAR`.*
+
+If you want, you can specify WP Query parameters here as well. Also, you can specify post_object columns in the where clause.
 
 == Extend default functionality ==
 
