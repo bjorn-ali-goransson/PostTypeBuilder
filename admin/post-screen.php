@@ -86,7 +86,11 @@ function posttypebuilder_add_meta_box($panel){
 }
 
 function posttypebuilder_add_property_to_meta_box($property, $property_annotation, $entity){
-	$name = $property->getName();
+  if(!$property_annotation->visible) {
+    return;
+	}
+
+  $name = $property->getName();
 	$input_id = "posttypebuilder_property_" . $name;
 	$is_multiple = is_array($entity->$name);
 	
@@ -96,11 +100,7 @@ function posttypebuilder_add_property_to_meta_box($property, $property_annotatio
 		$row_classes[] = "posttypebuilder-field-multiple";
 	}
 	
-	if($property_annotation->visible == true){
-		echo "<tr>";
-	} else {
-		echo "<tr class=\"" . implode(" ", $row_classes) . "\">";
-	}
+  echo "<tr class=\"" . implode(" ", $row_classes) . "\">";
 	
 	if($property_annotation->label == null){
 		$property_annotation->label = posttypebuilder_get_default_label($entity, $name);
