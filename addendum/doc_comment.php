@@ -15,11 +15,11 @@
 		}
 		
 		public function get($reflection) {
-			if($reflection instanceof ReflectionClass) {
+			if($reflection instanceof \ReflectionClass) {
 				return $this->forClass($reflection);
-			} elseif($reflection instanceof ReflectionMethod) {
+			} elseif($reflection instanceof \ReflectionMethod) {
 				return $this->forMethod($reflection);
-			} elseif($reflection instanceof ReflectionProperty) {
+			} elseif($reflection instanceof \ReflectionProperty) {
 				return $this->forProperty($reflection);
 			}
 		}
