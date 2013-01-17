@@ -1,6 +1,10 @@
 <?php
   namespace Addendum;
   
+  use \ReflectionClass as ReflectionClass;
+  use \ReflectionMethod as ReflectionMethod;
+  use \ReflectionProperty as ReflectionProperty;
+  
   class DocComment {
     private static $classes = array();
     private static $methods = array();
@@ -15,11 +19,11 @@
     }
     
     public function get($reflection) {
-      if($reflection instanceof \ReflectionClass) {
+      if($reflection instanceof ReflectionClass) {
         return $this->forClass($reflection);
-      } elseif($reflection instanceof \ReflectionMethod) {
+      } elseif($reflection instanceof ReflectionMethod) {
         return $this->forMethod($reflection);
-      } elseif($reflection instanceof \ReflectionProperty) {
+      } elseif($reflection instanceof ReflectionProperty) {
         return $this->forProperty($reflection);
       }
     }
@@ -57,17 +61,22 @@
       $currentBlock = false;
       $max = count($tokens);
       $i = 0;
+      $namespace = "";
       while($i < $max) {
         $token = $tokens[$i];
         if(is_array($token)) {
           list($code, $value) = $token;
           switch($code) {
+            case T_NAMESPACE: 
+              $namespace = $tokens[$i+2][1];
+              break;
+            
             case T_DOC_COMMENT: 
               $comment = $value; 
               break;
             
             case T_CLASS: 
-              $class = $this->getString($tokens, $i, $max);
+              $class = ($namespace != "" ? $namespace . "\\" : "") . $this->getString($tokens, $i, $max);
               if($comment !== false) {
                 self::$classes[$class] = $comment;
                 $comment = false;
